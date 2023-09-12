@@ -1,22 +1,22 @@
 #include "init.h"
 
-SDL_Context *init_sdl()
+SDLContext *init_sdl()
 {
-	SDL_Context *ctx;
+	SDLContext *ctx;
 	SDL_Window *window;
 	SDL_Renderer *renderer;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		printf("init_sdl(): SDL Error: %s", SDL_GetError());
+		printf("Error: init_sdl() -> SDL Error: %s.\n", SDL_GetError());
 		return NULL;
 	}
 
 	// Ventana
-	window = SDL_CreateWindow(NAME, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, BASE_WIDTH, BASE_HEIGHT, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow(NAME, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, DISPLAY_REAL_WIDTH, DISPLAY_REAL_HEIGHT, SDL_WINDOW_SHOWN);
 	if (!window)
 	{
-		printf("init_sdl(): SDL Error: %s", SDL_GetError());
+		printf("Error: init_sdl() -> SDL Error: %s.\n", SDL_GetError());
 		SDL_Quit();
 
 		return NULL;
@@ -26,29 +26,42 @@ SDL_Context *init_sdl()
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (!renderer)
 	{
-		printf("init_sdl(): SDL Error: %s", SDL_GetError());
+		printf("Error: init_sdl() -> SDL Error: %s.\n", SDL_GetError());
 		SDL_DestroyWindow(window);
 		SDL_Quit();
 
 		return NULL;
 	}
 
-	ctx = (SDL_Context *)malloc(sizeof(SDL_Context));
-	if (ctx)
+	ctx = (SDLContext *)malloc(sizeof(SDLContext));
+	if (!ctx)
 	{
-		ctx->window = window;
-		ctx->renderer = renderer;
+		printf("Error: init_sdl() -> Not enough memory to allocate SDLContext.\n");
+		SDL_DestroyWindow(window);
+		SDL_DestroyRenderer(renderer);
+		SDL_Quit();
+
+		return NULL;
 	}
+	
+	ctx->window = window;
+	ctx->renderer = renderer;
+
+	printf("SDL Initialized!\n");
 
 	return ctx;
 }
 
-void close_sdl(SDL_Context *ctx)
+void close_sdl(SDLContext *ctx)
 {
 	if (ctx)
 	{
 		SDL_DestroyRenderer(ctx->renderer);
 		SDL_DestroyWindow(ctx->window);
 		free(ctx);
+
+		SDL_Quit();
+
+		printf("SDL Closed!\n");
 	}
 }

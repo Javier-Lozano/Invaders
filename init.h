@@ -6,19 +6,21 @@
 ///// MACROS
 
 #define NAME "Invaders from Yuggoth"
-#define BASE_WIDTH 240
-#define BASE_HEIGHT 320
+#define DISPLAY_REAL_WIDTH 240
+#define DISPLAY_REAL_HEIGHT 320
+
+#define MAX_BULLETS 256
 
 ///// Estructuras
 
-typedef struct  {
+typedef struct sdl_context_st {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
-} SDL_Context;
+} SDLContext;
 
 ///// Funciones
 
-SDL_Context *init_sdl();
-void close_sdl(SDL_Context *ctx);
+SDLContext *init_sdl();
+void close_sdl(SDLContext *ctx);
 
 #endif // INIT_H

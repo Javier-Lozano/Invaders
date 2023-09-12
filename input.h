@@ -5,18 +5,18 @@
 
 ///// Estructuras
 
-typedef struct {
+typedef struct input_st {
 	int left, right, fire, start;
-} KeyBindings;
+} Input;
 
-typedef KeyBindings Input;
+typedef Input Bindings;
 
 ///// Funciones
 
-void handle_events(SDL_Context *context);
-void handle_input_general(SDL_Context *context, SDL_KeyboardEvent *key);
-void handle_input_player(SDL_KeyboardEvent *key);
+void handle_events(SDLContext *context, Input *input, Bindings *bindings);
+void handle_input_player(SDL_KeyboardEvent *key, Input *input, Bindings *bindings);
+void handle_input_general(SDLContext *context, SDL_KeyboardEvent *key);
 
-void init_keybindings();
+void init_Bindings(Bindings *bindings);
 
 #endif // INPUT_H
