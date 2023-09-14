@@ -2,7 +2,7 @@
 
 ///// Entity
 
-Entity *entity_create(CollisionBox collider /*, Sprite *sprites*/)
+Entity *entity_create(Sprite *sprite, SDL_FRect *collider, SDL_FPoint *speed, Uint8 type)
 {
 	Entity *entity = NULL;
 
@@ -12,11 +12,10 @@ Entity *entity_create(CollisionBox collider /*, Sprite *sprites*/)
 		printf("Error: entity_create() -> Not enough memory to allocate Entity.\n");
 	}
 
-	entity->collider = collider;
-	entity->x_speed = 0;
-	entity->y_speed = 0;
-	entity->delete_flag = 0;
-	//entity->sprites = sprites;
+	entity->sprite = sprite;
+	entity->collider = *collider;
+	entity->speed = *speed;
+	entity->type = type;
 
 	return entity;
 }
@@ -25,9 +24,8 @@ void entity_destroy(Entity *entity)
 {
 	if (entity)
 	{
-		/*sprite_destroy(entity->sprite)*/
+		//sprite_destroy(entity->sprite)
 		free(entity);
-		entity = NULL;
 	}
 }
 
@@ -37,16 +35,17 @@ Entity *player_create()
 {
 	Entity *player = NULL;
 
-	CollisionBox collider = {
-		PLAYER_START_X,
-		PLAYER_START_Y,
-		PLAYER_WIDTH,
-		PLAYER_HEIGHT,
-		LAYER_PLAYER
+	SDL_FRect collider = {
+		PLAYER_X,
+		PLAYER_Y,
+		PLAYER_W,
+		PLAYER_H
 	};
 
+	SDL_FPoint speed = {0};
+
 	// Entity
-	player = entity_create(collider);
+	player = entity_create(NULL, &collider, &speed, TYPE_PLAYER);
 	if (!player)
 	{
 		printf("Error: player_create() -> Couldn't create Entity (Player).\n");
@@ -57,61 +56,48 @@ Entity *player_create()
 }
 
 
-void player_update(Entity *player, Input *input, Entity **bullets)
+void player_update(Entity *player, Input *input)
 {
-	// Bala
-	static Entity *bullet_ref = NULL;
-
 	// Movimiento
-	player->x_speed = (input->right - input->left) * PLAYER_SPEED;
-	player->collider.x += player->x_speed;
-
-	//if (input->right)	{ player->x_speed += PLAYER_SPEED; }
-	//if (input->left)	{ player->x_speed -= PLAYER_SPEED; }
+	player->speed.x = (input->right.state - input->left.state) * PLAYER_SPEED;
+	player->collider.x += player->speed.x;
 
 	// Limita la posicion
 	if (player->collider.x < 0) { player->collider.x = 0; }
-	if (player->collider.x > DISPLAY_REAL_WIDTH - PLAYER_WIDTH) { player->collider.x = DISPLAY_REAL_WIDTH - PLAYER_WIDTH; }
+	if (player->collider.x > DISPLAY_REAL_WIDTH - PLAYER_W) { player->collider.x = DISPLAY_REAL_WIDTH - PLAYER_W; }
 
 	// Disparo
-	if (input->fire && bullet_ref == NULL)
+	if (input->fire.state)
 	{
-		// Check bullets for an empty space
-		for(int i = 0; i < MAX_BULLETS; i++)
-		{
-			if (!bullets[i] && bullet_ref == NULL)
-			{
-				bullets[i] = bullet_create(player->collider.x, player->collider.y - 4, LAYER_PLAYER);
-				bullet_ref = bullets[i];
-			}
-		}
+		//player_bullet = bullet_create(player->collider.x, player->collider.y - 4, LAYER_PLAYER);
 	}
 }
 
 ///// Bullets
 
-Entity *bullet_create(float x, float y, Layer type)
+Entity *bullet_create(float x, float y, Uint8 type)
 {
 	Entity *bullet = NULL;
-	float x_speed = 0, y_speed = 0;
-	CollisionBox col = {x, y, 0, 0, type};
+
+	SDL_FRect collider = {x, y, BULLET_W, BULLET_H};
+	SDL_FPoint speed = {0};
 
 	switch (type)
 	{
-		case LAYER_PLAYER:
+		case TYPE_BULLET_PLAYER:
 		{
-			col.w = 3;
-			col.h = 8;
-			col.type = type;
-			y_speed = -16; 
+			speed.y = -BULLET_SPEED;
 			break;
 		}
-		case LAYER_ENEMY:
+		case TYPE_BULLET_ENEMY:
 		{
-			col.w = 2;
-			col.h = 8;
-			col.type = type;
-			y_speed = 16; 
+			speed.y = BULLET_SPEED;
+			break;
+		}
+		case TYPE_BULLET_ENEMY_SKULL:
+		{
+			collider.w = BULLET_INV_W;
+			speed.y = BULLET_SPEED * 1.5f;
 			break;
 		}
 		default:
@@ -121,31 +107,27 @@ Entity *bullet_create(float x, float y, Layer type)
 		}
 	}
 
-	bullet = entity_create(col);
+	bullet = entity_create(NULL, &collider, &speed, type);
 	if (!bullet)
 	{
 		printf("Error: bullet_create() -> Couldn't create Entity (Bullet).\n");
 		return NULL;
 	}
 
-	bullet->x_speed = x_speed;
-	bullet->y_speed = y_speed;
-
 	return bullet;
 }
 
 void bullet_update(Entity *bullet)
 {
-	bullet->collider.x += bullet->x_speed;
-	bullet->collider.y += bullet->y_speed;
+	bullet->collider.x += bullet->speed.x;
+	bullet->collider.y += bullet->speed.y;
 
-	if ((bullet->collider.x < 0) || (bullet->collider.x > DISPLAY_REAL_WIDTH)) {bullet->x_speed = -bullet->x_speed;}
+	//if ((bullet->collider.x < 0) || (bullet->collider.x > DISPLAY_REAL_WIDTH)) {bullet->x_speed = -bullet->x_speed;}
 
-	// Elimina las balas que llegan a los bordes de la pantalla
-	if ((bullet->collider.y < 16) || (bullet->collider.y > DISPLAY_REAL_HEIGHT - 16))
+	// Marca las balas que llegan a los bordes de la pantalla
+	if (CHECK_BETWEEN_RANGE(bullet->collider.y, 16, DISPLAY_REAL_HEIGHT - 16))
 	{
-		bullet->delete_flag = 1;
-		bullet->collider.type = LAYER_NONE;
+		bullet->type = TYPE_NONE;
 	}
 
 }

@@ -1,5 +1,5 @@
-#ifndef INIT_H
-#define INIT_H
+#ifndef _INIT_H_
+#define _INIT_H_
 
 #include <SDL2/SDL.h>
 
@@ -23,4 +23,4 @@ typedef struct sdl_context_st {
 SDLContext *init_sdl();
 void close_sdl(SDLContext *ctx);
 
-#endif // INIT_H
+#endif // _INIT_H_
